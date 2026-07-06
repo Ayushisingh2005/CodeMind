@@ -1,0 +1,16 @@
+# Environment files with secrets
+.env
+.env.local
+*.env
+
+# Dependencies
+node_modules/
+.venv/
+__pycache__/
+
+# Build artifacts
+.next/
+*.pyc
+
+# Trained models (optional, can be large)
+*.joblib
