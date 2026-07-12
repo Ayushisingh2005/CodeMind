@@ -2,7 +2,7 @@ import './globals.css';
 
 export const metadata = {
   title: 'CodeMind — Chat With Your Codebase',
-  description: 'AI-powered semantic search and Q&A over your GitHub repository',
+  description: 'Ask any GitHub repo a question and get a sourced answer, powered by AI-native code search.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
