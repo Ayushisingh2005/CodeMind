@@ -157,3 +157,4 @@ def index_repo(repo_full_name: str, github_token: str = None):
     shutil.rmtree(tmp_dir, ignore_errors=True)
     print(f"✅ Indexed {len(all_chunks)} chunks for {repo_full_name}")
     return len(all_chunks)
+  
