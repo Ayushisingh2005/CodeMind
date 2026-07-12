@@ -20,3 +20,4 @@ def predict_category(title: str, body: str) -> dict:
     probabilities = pipeline.predict_proba([text])[0]
     confidence = max(probabilities)
     return {"category": category, "confidence": float(confidence)}
+
