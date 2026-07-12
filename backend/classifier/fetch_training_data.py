@@ -6,15 +6,6 @@ from dotenv import load_dotenv
 load_dotenv()
 GITHUB_TOKEN = os.environ["GITHUB_TOKEN"]
 
-# Map GitHub's own label names to our simplified categories.
-# Adjust these to match the labels used in whichever repo you pull from.
-LABEL_MAP = {
-    "bug": "bug",
-    "enhancement": "feature_request",
-    "question": "question",
-    "duplicate": "duplicate",
-}
-
 
 def fetch_labeled_issues(repo: str, label: str, max_pages: int = 5):
     issues = []
@@ -31,23 +22,62 @@ def fetch_labeled_issues(repo: str, label: str, max_pages: int = 5):
     return issues
 
 
-def build_dataset(repo: str, output_file: str = "training_data.json"):
+def build_dataset(repo_configs: list[dict], output_file: str = "training_data.json", max_per_category: int = 150):
+    from collections import defaultdict
     dataset = []
-    for github_label, our_category in LABEL_MAP.items():
-        print(f"Fetching issues labeled '{github_label}'...")
-        issues = fetch_labeled_issues(repo, github_label)
-        for issue in issues:
-            if "pull_request" in issue:
-                continue  # skip PRs, we only want issues
-            text = f"{issue.get('title', '')} {issue.get('body', '') or ''}"
-            dataset.append({"text": text, "label": our_category})
-        print(f"  → {len(issues)} issues found")
+    category_counts = defaultdict(int)
+
+    for config in repo_configs:
+        repo = config["repo"]
+        label_map = config["label_map"]
+        print(f"\n=== Fetching from {repo} ===")
+        for github_label, our_category in label_map.items():
+            if category_counts[our_category] >= max_per_category:
+                print(f"Skipping '{github_label}' — already have enough '{our_category}' examples")
+                continue
+            print(f"Fetching issues labeled '{github_label}'...")
+            issues = fetch_labeled_issues(repo, github_label)
+            count = 0
+            for issue in issues:
+                if "pull_request" in issue:
+                    continue
+                if category_counts[our_category] >= max_per_category:
+                    break
+                text = f"{issue.get('title', '')} {issue.get('body', '') or ''}"
+                dataset.append({"text": text, "label": our_category})
+                category_counts[our_category] += 1
+                count += 1
+            print(f"  → {count} issues added (total for '{our_category}': {category_counts[our_category]})")
 
     with open(output_file, "w") as f:
         json.dump(dataset, f, indent=2)
-    print(f"✅ Saved {len(dataset)} labeled examples to {output_file}")
+    print(f"\n✅ Saved {len(dataset)} total labeled examples to {output_file}")
+    print(f"Category breakdown: {dict(category_counts)}")
 
 
 if __name__ == "__main__":
-    # Example: use a large public repo with well-maintained labels
-    build_dataset("facebook/react")
+    build_dataset([
+        {
+            "repo": "psf/requests",
+            "label_map": {
+                "Bug": "bug",
+                "Feature Request": "feature_request",
+                "Question/Not a bug": "question",
+            },
+        },
+        {
+            "repo": "pallets/flask",
+            "label_map": {
+                "bug": "bug",
+                "question": "question",
+            },
+        },
+        {
+            "repo": "expressjs/express",
+            "label_map": {
+                "bug": "bug",
+                "enhancement": "feature_request",
+                "question": "question",
+            },
+        },
+    ])
