@@ -54,7 +54,7 @@ export default function Home() {
     setLoading(true);
     setStatus(null);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/index`, {
+     const res = await fetch(`https://codemind-backend-tkok.onrender.com/index`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ repo_full_name: repo.trim() }),
