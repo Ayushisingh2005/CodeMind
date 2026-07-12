@@ -72,3 +72,4 @@ async def handle_issue_webhook(request: Request):
         return {"status": "labeled", "category": category, "confidence": confidence}
 
     return {"status": "low_confidence", "category": category, "confidence": confidence}
+
