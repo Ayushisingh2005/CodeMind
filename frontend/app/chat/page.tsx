@@ -39,7 +39,7 @@ function ChatContent() {
     setLoading(true);
 
     try {
-      const res = await fetch(`https://codemind-backend-tkok.onrender.com/index`, {
+      const res = await fetch(`https://codemind-tki8.onrender.com/index`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ repo_full_name: repo, question }),
