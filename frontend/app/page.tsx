@@ -49,26 +49,40 @@ export default function Home() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const router = useRouter();
 
-  async function handleIndex() {
-    if (!repo.trim()) return;
-    setLoading(true);
-    setStatus(null);
-    try {
-     const res = await fetch(`https://codemind-tki8.onrender.com/index`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ repo_full_name: repo.trim() }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || 'Indexing failed');
-      setStatus(`Found ${data.chunks_indexed} chunks — taking you there now`);
-      setTimeout(() => router.push(`/chat?repo=${encodeURIComponent(repo.trim())}`), 700);
-    } catch (err: any) {
+async function handleIndex() {
+  if (!repo.trim()) return;
+  setLoading(true);
+  setStatus(null);
+
+  // Strip a full GitHub URL down to just "username/repo" if pasted
+  const cleanRepo = repo.trim().replace(/^https?:\/\/github\.com\//, '').replace(/\.git$/, '');
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 90000); // 90s timeout (covers Render cold start)
+
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/index`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ repo_full_name: cleanRepo }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Indexing failed');
+    setStatus(`Found ${data.chunks_indexed} chunks — taking you there now`);
+    setTimeout(() => router.push(`/chat?repo=${encodeURIComponent(cleanRepo)}`), 700);
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      setStatus("Request timed out — the backend may be waking up from sleep. Please try again in a moment.");
+    } else {
       setStatus(`Couldn't read that repo: ${err.message}`);
-    } finally {
-      setLoading(false);
     }
+  } finally {
+    setLoading(false);
   }
+}
 
   return (
     <main className="min-h-screen overflow-x-hidden">
