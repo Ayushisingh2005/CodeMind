@@ -61,7 +61,7 @@ async function handleIndex() {
   const timeoutId = setTimeout(() => controller.abort(), 90000); // 90s timeout (covers Render cold start)
 
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/index`, {
+   const res = await fetch(`https://codemind-tki8.onrender.com/index`,  {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ repo_full_name: cleanRepo }),
