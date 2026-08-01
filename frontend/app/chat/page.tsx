@@ -42,7 +42,7 @@ async function sendMessage(overrideText?: string) {
   const timeoutId = setTimeout(() => controller.abort(), 90000);
 
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat`, {
+   const res = await fetch(`https://codemind-tki8.onrender.com/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ repo_full_name: repo, question }),
