@@ -31,30 +31,36 @@ function ChatContent() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
 
-  async function sendMessage(overrideText?: string) {
-    const question = (overrideText ?? input).trim();
-    if (!question) return;
-    setMessages((prev) => [...prev, { role: 'user', content: question }]);
-    setInput('');
-    setLoading(true);
+async function sendMessage(overrideText?: string) {
+  const question = (overrideText ?? input).trim();
+  if (!question) return;
+  setMessages((prev) => [...prev, { role: 'user', content: question }]);
+  setInput('');
+  setLoading(true);
 
-    try {
-      const res = await fetch(`https://codemind-tki8.onrender.com/index`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ repo_full_name: repo, question }),
-      });
-      const data = await res.json();
-      setMessages((prev) => [...prev, { role: 'assistant', content: data.answer, sources: data.sources }]);
-    } catch {
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', content: "Hmm, something went sideways — mind trying that again?" },
-      ]);
-    } finally {
-      setLoading(false);
-    }
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 90000);
+
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ repo_full_name: repo, question }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    const data = await res.json();
+    setMessages((prev) => [...prev, { role: 'assistant', content: data.answer, sources: data.sources }]);
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    const message = err.name === 'AbortError'
+      ? "That took too long and timed out — the backend may still be waking up. Mind trying again?"
+      : "Hmm, something went sideways — mind trying that again?";
+    setMessages((prev) => [...prev, { role: 'assistant', content: message }]);
+  } finally {
+    setLoading(false);
   }
+}
 
   return (
     <main className="min-h-screen flex flex-col max-w-3xl mx-auto px-4 relative overflow-hidden">
